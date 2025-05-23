@@ -1,0 +1,135 @@
+# /.gitignore for Angela
+
+# --- General ---
+# Operating System generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / Editor specific files
+.idea/
+.vscode/
+*.project
+*.pydevproject
+*.sublime-project
+*.sublime-workspace
+*.tmproj
+.project
+.settings/
+*.kdev4
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# --- Python ---
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+*.pyd
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib60/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+
+# Local settings
+local_settings.py
+local.py
+*.local.py
+db.sqlite3
+db.sqlite3-journal
+
+# --- Rust ---
+# Target directory 
+/target/
+
+# Rustfmt backup files
+*.rs.bk
+
+# --- Secrets & Sensitive Data ---
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+secrets.yml
+secrets.json
+*.pem
+*.key
+credentials*
+*.pskc
+config.json # If it contains secrets
+
+# --- Other common build/dependency directories ---
+node_modules/ 
+bower_components/
+
+# --- Specific ---
+# This is where I will add more if needed e.g., large data files, specific temporary outputs
