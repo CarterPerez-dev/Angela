@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Prints my project tree, replaces existing tree
 
 OUTPUT_DIR="Architecture"
 OUTPUT_FILE="${OUTPUT_DIR}/TREE.md"
