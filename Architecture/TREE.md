@@ -13,7 +13,8 @@
 │   ├── PLAN.MD
 │   ├── STEPS.md
 │   ├── Steps
-│   │   └── Step1.md
+│   │   ├── Step1.md
+│   │   └── Step2.md
 │   ├── TODO
 │   │   └── TODO1.md
 │   └── crates
@@ -628,6 +629,8 @@
 │       ├── scaling.md
 │       └── security.md
 ├── examples
+│   ├── SIMD
+│   │   └── https_parser_demo.rs
 │   ├── enterprise-app
 │   │   ├── Cargo.toml
 │   │   ├── README.md
@@ -866,4 +869,4 @@
     ├── vite.config.js
     └── vite.config.ts
 
-320 directories, 547 files
+321 directories, 549 files
