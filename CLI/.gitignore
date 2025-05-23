@@ -1,0 +1,13 @@
+# :D
+.env
+
+# Python
+__pycache__/
+**/__pycache__/
+_pycache_/
+**/_pycache_/
+*.pyc
+*.pyo
+*.pyd
+
+
