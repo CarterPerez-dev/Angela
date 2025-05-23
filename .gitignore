@@ -1,4 +1,4 @@
-# /.gitignore for Angela
+# Angelax Project .gitignore
 
 # --- General ---
 # Operating System generated files
@@ -19,6 +19,7 @@ Desktop.ini
 .settings/
 *.kdev4
 
+
 # Temporary files
 *~
 *.swp
@@ -30,25 +31,26 @@ Desktop.ini
 *.log
 logs/
 *.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# --- Python ---
-# Byte-compiled / optimized / DLL files
+# --- Python Specific ---
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+# C extensions 
 *.so
 *.pyd
 
-# Distribution / packaging
-build/
+# Distribution / packaging 
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib60/
 parts/
 sdist/
@@ -60,31 +62,26 @@ wheels/
 MANIFEST
 
 # Python Virtual Environments
-.env
-.venv
-env/
-venv/
+.venv/ 
+env/   
 ENV/
 env.bak/
 venv.bak/
 
 # PyInstaller
-*.manifest
+*.manifest 
 *.spec
 
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test / coverage reports 
 htmlcov/
 .tox/
 .nox/
-.coverage
-.coverage.*
-.cache
 nosetests.xml
-coverage.xml
+coverage.xml 
 *.cover
 .hypothesis/
 .pytest_cache/
@@ -98,38 +95,75 @@ dmypy.json
 profile_default/
 ipython_config.py
 
-
-# Local settings
-local_settings.py
-local.py
-*.local.py
-db.sqlite3
-db.sqlite3-journal
-
-# --- Rust ---
-# Target directory 
+# --- Rust Specific ---
 /target/
 
 # Rustfmt backup files
 *.rs.bk
 
-# --- Secrets & Sensitive Data ---
+# --- JavaScript / TypeScript / Node / Vite ---
+/website/node_modules/
+
+# Build output for the website subproject
+/website/dist/
+/website/build/
+/website/out/   
+
+# Vite specific cache for the website subproject
+/website/.vite/
+/website/dist-ssr/ 
+
+.next/
+.nuxt/
+.svelte-kit/
+
+# TypeScript cache files 
+*.tsbuildinfo
+
+# Local ESLint cache 
+/website/.eslintcache
+
+# Test coverage output for JS/TS
+/website/coverage/
+
+# Storybook output 
+/website/storybook-static/
+
+
+.cache/ 
+.coverage 
+
+# --- Secrets & Local Configuration 
+
+# Environment variable files
+.env
+.env.*
+!.env.example 
+!.env.sample
+
+# Specific local overrides 
 .env.*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Python Local settings 
+local_settings.py
+local.py
+*.local.py
+db.sqlite3 
+db.sqlite3-journal
+
+# Other secrets
 secrets.yml
 secrets.json
 *.pem
 *.key
 credentials*
 *.pskc
-config.json # If it contains secrets
+config.json 
 
-# --- Other common build/dependency directories ---
-node_modules/ 
-bower_components/
-
-# --- Specific ---
-# This is where I will add more if needed e.g., large data files, specific temporary outputs
+# --- Specific to Angelax Project ---
+# This is where I will add more if needed 
+/PLANS/
