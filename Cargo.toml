@@ -1,0 +1,167 @@
+# This file defines the Angelax workspace configuration with aggressive performance optimizations.
+# It coordinates all crates in the project and sets global build profiles for maximum speed.
+
+[workspace]
+members = [
+    # Core crates
+    "crates/angelax-allocator",
+    "crates/angelax-auth",
+    "crates/angelax-cli",
+    "crates/angelax-common",
+    "crates/angelax-config",
+    "crates/angelax-core",
+    "crates/angelax-db",
+    "crates/angelax-deployment",
+    "crates/angelax-graphql",
+    "crates/angelax-grpc",
+    "crates/angelax-json",
+    "crates/angelax-macros",
+    "crates/angelax-monitoring",
+    "crates/angelax-plugin-api",
+    "crates/angelax-runtime",
+    "crates/angelax-testing",
+    "crates/angelax-websocket",
+    
+    # Tools
+    "tools/benchmarks",
+    "tools/code-generator",
+    "tools/load-tester",
+    "tools/profiler",
+    "tools/security-scanner",
+    
+    # Examples
+    "examples/enterprise-app",
+    "examples/graphql-api",
+    "examples/hello-world",
+    "examples/microservices/api-gateway",
+    "examples/microservices/auth-service",
+    "examples/microservices/user-service",
+    "examples/performance-showcase",
+    "examples/rest-api",
+    "examples/websocket-chat",
+]
+
+# I'm setting the resolver to version 2 for better dependency resolution
+resolver = "2"
+
+# Here I'm excluding directories that shouldn't be part of the workspace
+exclude = [
+    "benchmarks/results",
+    "website",
+    "bindings",
+    "ide-plugins",
+]
+
+[workspace.package]
+# These defaults will be inherited by all workspace members
+version = "0.1.0"
+authors = ["Angelax Team"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/angelax/angelax"
+homepage = "https://angelax.io"
+documentation = "https://docs.angelax.io"
+readme = "README.md"
+keywords = ["web", "framework", "async", "http", "server"]
+categories = ["web-programming", "web-programming::http-server", "asynchronous", "network-programming"]
+rust-version = "1.75.0"  # I'm targeting a recent stable version for modern features
+
+[workspace.dependencies]
+# Here I'm defining shared dependencies with specific versions to ensure consistency
+# I'll add more as we implement specific crates
+tokio = { version = "1.35", default-features = false }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+bytes = "1.5"
+futures = "0.3"
+pin-project-lite = "0.2"
+
+# Profile configurations for maximum performance
+[profile.dev]
+# I'm optimizing dev builds for faster compilation while keeping debug info
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+incremental = true
+# Using thin LTO for faster linking in dev
+lto = "thin"
+codegen-units = 256
+
+[profile.release]
+# For release, I'm going all-out on optimizations
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+incremental = false
+# Fat LTO for maximum cross-crate optimization
+lto = "fat"
+# Single codegen unit for better optimization at the cost of parallelism
+codegen-units = 1
+# Optimize for small binary size without sacrificing too much performance
+strip = "symbols"
+# Abort on panic for smaller binaries and better performance
+panic = "abort"
+
+[profile.release.package."*"]
+# I'm ensuring all dependencies are also optimized
+opt-level = 3
+codegen-units = 1
+
+# Special profile for benchmarks - we want optimizations but with some debug info
+[profile.bench]
+inherits = "release"
+debug = true
+lto = "thin"
+# More codegen units for faster benchmark compilation
+codegen-units = 4
+
+# Profile for testing with optimizations (for integration tests)
+[profile.test]
+inherits = "dev"
+opt-level = 2
+debug = true
+
+# Ultra-performance profile for production deployments
+[profile.production]
+inherits = "release"
+# Using target-cpu=native when building for specific deployment targets
+# This will be overridden in CI/CD for portable builds
+rustflags = ["-C", "target-cpu=native"]
+
+# Profile for size-optimized builds (e.g., for edge deployments)
+[profile.min-size]
+inherits = "release"
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+
+# Patch section for replacing dependencies with optimized versions
+[patch.crates-io]
+# We'll add patches here for any dependencies we need to optimize further
+
+# Build configuration
+[build]
+# I'm setting up parallel compilation for faster builds
+jobs = 0  # Use all available cores
+# Target directory for all workspace members
+target-dir = "target"
+# Enable pipelined compilation
+pipelined-compilation = true
+
+# Cargo configuration embedded in Cargo.toml (requires nightly, but documenting for future)
+# [cargo]
+# parallel-jobs = true
+# registries = ["crates-io"]
+
+# Documentation settings
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+targets = ["x86_64-unknown-linux-gnu"]

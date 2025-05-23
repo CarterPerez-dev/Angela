@@ -1,0 +1,219 @@
+# This workflow ensures our optimized builds work across different platforms and configurations.
+# It runs tests, benchmarks, and builds with various optimization levels.
+
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_LOG: debug
+
+jobs:
+  # I'm setting up a job for code quality checks
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-quality-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  # Testing across different platforms
+  test:
+    name: Test Suite
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable, nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      
+      - name: Install mold linker (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          wget https://github.com/rui314/mold/releases/download/v2.0.0/mold-2.0.0-x86_64-linux.tar.gz
+          tar -xzf mold-2.0.0-x86_64-linux.tar.gz
+          sudo cp mold-2.0.0-x86_64-linux/bin/mold /usr/local/bin/
+          sudo chmod +x /usr/local/bin/mold
+      
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-test-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run tests
+        run: cargo test --all --verbose
+      
+      - name: Run tests (release mode)
+        run: cargo test --all --release --verbose
+
+  # Building with different optimization profiles
+  build:
+    name: Build Profiles
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [dev, release, production, min-size]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install mold linker
+        run: |
+          wget https://github.com/rui314/mold/releases/download/v2.0.0/mold-2.0.0-x86_64-linux.tar.gz
+          tar -xzf mold-2.0.0-x86_64-linux.tar.gz
+          sudo cp mold-2.0.0-x86_64-linux/bin/mold /usr/local/bin/
+          sudo chmod +x /usr/local/bin/mold
+      
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-build-${{ matrix.profile }}-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Build ${{ matrix.profile }}
+        run: |
+          if [ "${{ matrix.profile }}" = "dev" ]; then
+            cargo build --all
+          else
+            cargo build --all --profile ${{ matrix.profile }}
+          fi
+      
+      - name: Check binary size
+        run: |
+          find target -name "angelax*" -type f -executable | xargs ls -lh
+
+  # Performance benchmarking
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install benchmark dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y linux-tools-common linux-tools-generic linux-tools-`uname -r`
+          echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+      
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run benchmarks
+        run: cargo bench --profile bench -- --output-format bencher | tee output.txt
+      
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+
+  # Security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      
+      - name: Run security audit
+        run: cargo audit
+
+  # Documentation build
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build documentation
+        run: cargo doc --all-features --no-deps
+      
+      - name: Check documentation coverage
+        run: |
+          cargo doc --all-features --no-deps 2>&1 | grep -i warning || echo "No documentation warnings"
+
+  # Cross-compilation check
+  cross-compile:
+    name: Cross Compilation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: 
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - wasm32-unknown-unknown
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Install cross-compilation tools
+        run: |
+          cargo install cross --git https://github.com/cross-rs/cross
+      
+      - name: Build for ${{ matrix.target }}
+        run: cross build --target ${{ matrix.target }} --release

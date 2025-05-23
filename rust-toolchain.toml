@@ -1,0 +1,28 @@
+# This file ensures all developers and CI environments use the same Rust version.
+# It specifies the exact toolchain and additional components needed for Angelax development.
+
+[toolchain]
+# I'm using the latest stable channel for production readiness
+channel = "stable"
+# Pinning to a specific version for reproducibility
+version = "1.75.0"
+# Including essential components
+components = [
+    "rustfmt",      # Code formatting
+    "clippy",       # Linting
+    "rust-src",     # Source code for better IDE support
+    "rust-docs",    # Documentation
+    "rust-analyzer", # LSP for IDE integration
+    "llvm-tools",   # For coverage and profiling
+]
+# Targeting common platforms
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-unknown-linux-musl",  # For Alpine/minimal containers
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",        # Apple Silicon
+    "x86_64-pc-windows-msvc",
+    "wasm32-unknown-unknown",      # For potential WASM support
+]
+# I'm specifying the profile for consistency
+profile = "default"

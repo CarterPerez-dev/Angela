@@ -1,0 +1,152 @@
+# This file contains advanced build configurations for the Angelax project.
+# It sets compiler flags, linker options, and target-specific optimizations for maximum performance.
+
+[build]
+# I'm enabling all CPU cores for parallel compilation
+jobs = 0  # 0 = use all available cores
+# Setting the default target (can be overridden)
+target = "x86_64-unknown-linux-gnu"
+# Enable incremental compilation for faster rebuilds
+incremental = true
+# Use the fastest linker available
+rustflags = [
+    # CPU-specific optimizations (will be overridden for portable builds)
+    "-C", "target-cpu=native",
+    # Enable all SSE, AVX, and other SIMD instructions
+    "-C", "target-feature=+sse,+sse2,+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+avx2",
+    # Inline threshold for aggressive inlining
+    "-C", "inline-threshold=275",
+    # Link-time optimization
+    "-C", "lto=fat",
+    # Optimize for the local CPU
+    "-C", "opt-level=3",
+    # Use abort instead of unwind for panic
+    "-C", "panic=abort",
+    # Embed bitcode for LTO
+    "-C", "embed-bitcode=yes",
+    # Force frame pointers for better profiling
+    "-C", "force-frame-pointers=yes",
+    # Enable additional optimizations
+    "-C", "llvm-args=-aggressive-ext-opt -enable-gvn-memdep",
+    # Experimental features for better performance
+    "-Z", "mir-opt-level=4",
+    "-Z", "polymorphize=on",
+    "-Z", "merge-functions=disabled",
+]
+
+# Target-specific configurations
+[target.x86_64-unknown-linux-gnu]
+# I'm using mold as the linker for Linux - it's the fastest available
+linker = "clang"
+rustflags = [
+    "-C", "link-arg=-fuse-ld=mold",
+    "-C", "link-arg=-Wl,--gc-sections",
+    "-C", "link-arg=-Wl,--as-needed",
+    "-C", "link-arg=-Wl,-O3",
+    "-C", "link-arg=-Wl,--hash-style=gnu",
+    "-C", "link-arg=-Wl,--enable-new-dtags",
+]
+
+[target.x86_64-apple-darwin]
+# For macOS, I'm using the native linker with optimizations
+rustflags = [
+    "-C", "link-arg=-Wl,-dead_strip",
+    "-C", "link-arg=-Wl,-no_compact_unwind",
+]
+
+[target.x86_64-pc-windows-msvc]
+# For Windows MSVC
+rustflags = [
+    "-C", "link-arg=/OPT:REF",
+    "-C", "link-arg=/OPT:ICF",
+    "-C", "link-arg=/DEBUG:NONE",
+]
+
+# Alias for common commands
+[alias]
+# Quick build commands with optimal settings
+b = "build"
+br = "build --release"
+bp = "build --profile production"
+bm = "build --profile min-size"
+
+# Testing with optimizations
+t = "test"
+tr = "test --release"
+
+# Benchmarking
+bench = "bench --profile bench"
+
+# Check with all features
+ca = "check --all-features"
+
+# Format and lint
+fmt-check = "fmt -- --check"
+lint = "clippy -- -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery"
+lint-fix = "clippy --fix -- -D warnings"
+
+# Documentation
+d = "doc --no-deps --open"
+da = "doc --all-features --no-deps --open"
+
+# Clean everything including incremental compilation cache
+clean-all = "clean --release --target-dir target"
+
+# Profile-guided optimization helpers
+pgo-generate = "build --profile production --config profile.build.rustflags=[\"-C\",\"profile-generate=/tmp/pgo-data\"]"
+pgo-use = "build --profile production --config profile.build.rustflags=[\"-C\",\"profile-use=/tmp/pgo-data/merged.profdata\"]"
+
+# Advanced optimization features (requires nightly)
+[unstable]
+# Enable parallel frontend for faster compilation
+parallel-compiler = true
+# Build standard library with optimizations
+build-std = ["std", "panic_abort", "core", "alloc"]
+build-std-features = ["panic_immediate_abort"]
+# Use sparse registry protocol for faster index updates
+sparse-registry = true
+# Enable timing information
+timings = ["html", "json"]
+# Binary dependencies for faster proc-macro compilation
+bindeps = true
+# Multitarget builds
+multitarget = true
+# Avoid dev-dependencies in build scripts
+avoid-dev-deps = true
+# Direct minimal version dependencies
+direct-minimal-versions = true
+# Faster compression algorithm for incremental compilation
+incremental-cache-compression = "zstd"
+
+# Environment variables for additional optimizations
+[env]
+# I'm setting RUSTFLAGS for child processes
+RUSTFLAGS = "-C target-cpu=native -C opt-level=3"
+# Optimize build.rs scripts
+CARGO_PROFILE_DEV_BUILD_OVERRIDE_OPT_LEVEL = "3"
+CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_OPT_LEVEL = "3"
+# Use all CPU cores
+CARGO_BUILD_JOBS = "0"
+# Enable parallel rustc (nightly)
+RUSTC_PARALLEL_COMPILER = "1"
+# Increase codegen threads
+CARGO_CODEGEN_UNITS = "1"
+# Set higher priority for cargo processes
+CARGO_PROCESS_PRIORITY = "high"
+
+# Registry configuration
+[registries.crates-io]
+protocol = "sparse"
+
+# Network configuration for faster downloads
+[net]
+jobs = 0  # Unlimited parallelism
+retry = 3
+git-fetch-with-cli = false
+offline = false
+
+# Future optimizations to enable when stable
+# [future]
+# trim-paths = true  # Reduce binary size by trimming paths
+# split-debuginfo = "packed"  # Better debug info handling
+# strip = "symbols"  # Strip symbols in dev builds too
