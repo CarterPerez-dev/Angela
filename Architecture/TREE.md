@@ -334,6 +334,12 @@
 │   │   │   │   ├── handler.rs
 │   │   │   │   ├── mod.rs
 │   │   │   │   └── recovery.rs
+│   │   │   ├── huffman_decoder_optimized
+│   │   │   │   ├── bit_reader.rs
+│   │   │   │   ├── decoder.rs
+│   │   │   │   ├── error.rs
+│   │   │   │   ├── lut_generator.rs
+│   │   │   │   └── tables.rs
 │   │   │   ├── lib.rs
 │   │   │   ├── middleware
 │   │   │   │   ├── auth.rs
@@ -738,6 +744,7 @@
 │   └── prometheus
 │       ├── prometheus.yml
 │       └── rules
+├── repomix-output.xml
 ├── rust-toolchain.toml
 ├── scripts
 │   ├── benchmark.sh
@@ -869,4 +876,4 @@
     ├── vite.config.js
     └── vite.config.ts
 
-321 directories, 549 files
+322 directories, 555 files

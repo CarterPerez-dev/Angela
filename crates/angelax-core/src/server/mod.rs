@@ -24,7 +24,7 @@ pub struct ProtocolDetection {
     pub consumed: usize,
 }
 
-/// Fast protocol detection using SIMD
+//// Fast protocol detection using SIMD
 pub fn detect_protocol(input: &[u8]) -> Option<ProtocolDetection> {
     // Check for HTTP/2 connection preface
     if input.len() >= 24 {
@@ -36,25 +36,77 @@ pub fn detect_protocol(input: &[u8]) -> Option<ProtocolDetection> {
         }
     }
 
-    // Check for HTTP/1.x request
+    // Check for HTTP/1.x request using SIMD when possible
     if input.len() >= 16 {
-        // Look for HTTP methods
-        let methods = [
-            &b"GET "[..], &b"HEAD "[..], &b"POST "[..], &b"PUT "[..],
-            &b"DELETE "[..], &b"CONNECT "[..], &b"OPTIONS "[..],
-            &b"TRACE "[..], &b"PATCH "[..],
-        ];
-
-        for method in methods {
-            if input.starts_with(method) {
-                return Some(ProtocolDetection {
-                    protocol: Protocol::Http1,
-                    consumed: 0,
-                });
-            }
+        // I'm using SIMD to quickly scan for HTTP method patterns
+        if let Some(method_pos) = detect_http1_method_simd(input) {
+            return Some(ProtocolDetection {
+                protocol: Protocol::Http1,
+                consumed: 0,
+            });
         }
     }
 
+    None
+}
+
+/// SIMD-accelerated HTTP/1.1 method detection
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
+fn detect_http1_method_simd(input: &[u8]) -> Option<usize> {
+    use std::arch::x86_64::*;
+    
+    unsafe {
+        // I'm checking for common HTTP methods using SIMD
+        // This checks for "GET ", "POST", "PUT ", "HEAD" in parallel
+        let get_pattern = _mm_set_epi32(0, 0, 0, 0x20544547); // "GET "
+        let post_pattern = _mm_set_epi32(0, 0, 0, 0x54534F50); // "POST"
+        let put_pattern = _mm_set_epi32(0, 0, 0, 0x20545550); // "PUT "
+        let head_pattern = _mm_set_epi32(0, 0, 0, 0x44414548); // "HEAD"
+        
+        if input.len() >= 4 {
+            let data = _mm_loadu_si128(input.as_ptr() as *const __m128i);
+            
+            // Check all patterns
+            if _mm_movemask_epi8(_mm_cmpeq_epi32(data, get_pattern)) != 0 ||
+               _mm_movemask_epi8(_mm_cmpeq_epi32(data, post_pattern)) != 0 ||
+               _mm_movemask_epi8(_mm_cmpeq_epi32(data, put_pattern)) != 0 ||
+               _mm_movemask_epi8(_mm_cmpeq_epi32(data, head_pattern)) != 0 {
+                return Some(0);
+            }
+        }
+        
+        // Check for longer methods
+        let methods = [
+            &b"DELETE "[..], &b"CONNECT "[..], &b"OPTIONS "[..],
+            &b"TRACE "[..], &b"PATCH "[..],
+        ];
+        
+        for method in methods {
+            if input.starts_with(method) {
+                return Some(0);
+            }
+        }
+    }
+    
+    None
+}
+
+/// Fallback for non-SIMD platforms
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2")))]
+fn detect_http1_method_simd(input: &[u8]) -> Option<usize> {
+    // Fallback to simple byte comparison
+    let methods = [
+        &b"GET "[..], &b"HEAD "[..], &b"POST "[..], &b"PUT "[..],
+        &b"DELETE "[..], &b"CONNECT "[..], &b"OPTIONS "[..],
+        &b"TRACE "[..], &b"PATCH "[..],
+    ];
+
+    for method in methods {
+        if input.starts_with(method) {
+            return Some(0);
+        }
+    }
+    
     None
 }
 
