@@ -1,6 +1,5 @@
 # Structure 5/23/25 Angelax
-* ***/Architecture.md/Structure.md*** *
---------------------------------------------
+
 ```rust
 .
 ├── Architecture
